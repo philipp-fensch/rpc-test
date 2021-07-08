@@ -1,0 +1,3 @@
+[submodule "rpc-lib"]
+	path = rpc-lib
+	url = https://git-ce.rwth-aachen.de/philipp.fensch/rpc-lib.git
