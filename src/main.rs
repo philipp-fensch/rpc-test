@@ -1,16 +1,61 @@
 extern crate rpc_lib;
 use rpc_lib::include_rpcl;
+use std::mem::size_of;
+
+use std::time::*;
 
 #[include_rpcl("rpc_cuda.x")]
 struct RPCConnection;
 
 fn main() {
-    cuda_solve_linear_system();
+    let rpc_connection = RPCConnection::new("137.226.133.199");
+
+    const ITERATIONS: u32 = 10;
+
+    memcpy_test(&rpc_connection, ITERATIONS);
+    latency_test(&rpc_connection, ITERATIONS);
+    // linear_solver_test();
 }
 
-use std::mem::size_of;
+fn memcpy_test(rpc_connection: &RPCConnection, iterations: u32) {
+    const N_BYTES: u64 = 2 << 29; // 512 MiB
+    
+    let mut memory_host = Vec::with_capacity(N_BYTES as usize);
+    unsafe { memory_host.set_len(N_BYTES as usize); }
 
-fn cuda_solve_linear_system() {
+    let memory_dev = rpc_connection.cuda_malloc(N_BYTES).unwrap();
+
+    let mut duration = Duration::new(0, 0);
+
+    for _i in 0..iterations {
+        let memory_host_copy = memory_host.clone();
+        let begin = Instant::now();
+        rpc_connection.cuda_memcpy_htod(memory_dev, memory_host_copy, N_BYTES);
+        let end = Instant::now();
+        duration += end - begin;
+        println!("cudaMemcpy: {:?}", end - begin);
+    }
+
+    println!("cudaMemcpy Average: {:?}", duration / iterations);
+    rpc_connection.cuda_free(memory_dev);
+}
+
+fn latency_test(rpc_connection: &RPCConnection, iterations: u32) {
+
+    let mut duration = Duration::new(0, 0);
+
+    for _i in 0..iterations {
+        let begin = Instant::now();
+        rpc_connection.cuda_get_device_count();
+        let end = Instant::now();
+        duration += end - begin;
+        println!("cudaGetDeviceCount: {:?}", end - begin);
+    }
+
+    println!("cudaGetDeviceCount Average: {:?}", duration / iterations);
+}
+
+fn linear_solver_test() {
         const DIM: usize = 3;
         // System to Solve: (transposed)
         // | 2 2 0 |       | 2 |               |-1 |
