@@ -148,6 +148,7 @@ program RPC_CD_PROG {
         int          rpc_checkpoint()                                 = 0;
         int          rpc_deinit()                                     = 1;
         int          rpc_printmessage(string)                             = 2;
+        int          CUDA_REGISTER_FUNCTION(ptr, ptr, string, string, int)= 50;
 /* RUNTIME API */
         /* ### Device Management ### */
         int_result   CUDA_CHOOSE_DEVICE(mem_data)                       = 101;
@@ -353,6 +354,12 @@ program RPC_CD_PROG {
         int         rpc_cusolverDnDgetrs(ptr, int, int, int, ptr,
                                          int, ptr, ptr, int, ptr)       = 2005;
         int         rpc_cusolverDnDestroy(ptr)                          = 2006;
-        
+
+        ptr_result  rpc_cublasCreate()                              = 3001;
+        int         rpc_cublasDgemm(ptr, int, int, int, int, int, double,
+                                         ptr, int,
+                                         ptr, int, double,
+                                         ptr, int)                      = 3002;
+        int         rpc_cublasDestroy(ptr)                              = 3003;
     } = 1;
 } = 99;
